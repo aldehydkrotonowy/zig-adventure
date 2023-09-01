@@ -1,0 +1,9 @@
+[submodule "zig-stm32-blink-led"]
+	path = zig-stm32-blink-led
+	url = https://github.com/rbino/zig-stm32-blink.git
+[submodule "svd4zig"]
+	path = svd4zig
+	url = https://github.com/ionspin/svd4zig.git
+[submodule "zig-language"]
+	path = zig-language
+	url = https://github.com/ziglang/zig.git
