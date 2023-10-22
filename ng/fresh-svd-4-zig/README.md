@@ -12,6 +12,7 @@ format based of [this other `svd2zig`](https://github.com/lynaghk/svd2zig).
 It's named `svd4zig` since it's `svd2zig * 2`.
 
 Features taken from justinbalexander's `svd2zig`:
+
 - This was the one used as a starting point
 - 100% in Zig
 - Naming conventions are taken from the datasheet (i.e. all caps), so it's easy to follow along
@@ -21,10 +22,12 @@ Features taken from justinbalexander's `svd2zig`:
   interrupts)
 
 Features taken from lynaghk's `svd2zig`:
+
 - Registers are modeled with packed structs (see [this
   post](https://scattered-thoughts.net/writing/mmio-in-zig) from the original authors)
 
 New features:
+
 - Unused bits are manually aligned to 8 bit boundaries to avoid incurring in [this
   bug](https://github.com/ziglang/zig/issues/2627)
 
@@ -35,6 +38,9 @@ out the parts of the specification that are missing for your project.
 
 ```
 zig build -Drelease-safe
+: 1693146415:0;zig run src/main.zig
+: 1693146998:0;zig build-exe
+: 1693147003:0;zig build-exe src/main.zig
 ```
 
 ## Usage:
