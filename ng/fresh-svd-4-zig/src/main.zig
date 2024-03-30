@@ -11,8 +11,8 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const cwd = try std.fs.cwd().openIterableDir(".", .{});
-    var iterator = cwd.iterate();
+    const dir = try std.fs.cwd().openDir(".", .{ .iterate = true });
+    var iterator = dir.iterate();
     while (try iterator.next()) |path| {
         try stdout.print("{s}\n", .{path.name});
     }
@@ -25,7 +25,7 @@ pub fn main() !void {
 
     var buf: [20 * 1024]u8 = undefined;
     while (try file.reader().readUntilDelimiterOrEof(&buf, '\n')) |line| {
-        var trimmed = std.mem.trim(u8, line, " \n");
+        const trimmed = std.mem.trim(u8, line, " \n");
         var toker = std.mem.tokenize(u8, trimmed, "<>"); //" =\n<>\"");
         try stdout.print("toker: {any}\n", .{toker});
         while (toker.next()) |something| {
@@ -66,7 +66,7 @@ const XmlLine = struct {
 // getChunk
 fn parseXmlLine(line: []const u8) ?XmlLine {
     _ = line;
-    var diassembledLine = XmlLine{ .tag = undefined, .data = null, .derifedFrom = null };
+    const diassembledLine = XmlLine{ .tag = undefined, .data = null, .derifedFrom = null };
 
     return diassembledLine;
 }
