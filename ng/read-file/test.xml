@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<device schemaVersion="1.1" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="CMSIS-SVD_Schema_1_1.xsd">
+  <name>STM32F411</name>
+  <version>1.1</version>
+  <description>STM32F411</description>
+  <peripheral derivedFrom="TIM3">
+      <name>TIM4</name>
+      <baseAddress>0x40000800</baseAddress>
+  </peripheral>
+  <addressOffset> </addressOffset>
+  <resetValue></resetValue>
+</device>

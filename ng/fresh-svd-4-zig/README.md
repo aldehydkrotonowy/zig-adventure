@@ -78,3 +78,7 @@ regs.RCC.CR.modify(.{ .HSEON = 1 });
 // Wait for HSE ready
 while (regs.RCC.CR.read().HSERDY != 1) {}
 ```
+
+{ 104 97 107 117 110 97 32 109 97 116 97 116 97 32 49 13 } = hakuna matata 1
+{ 104 97 107 117 110 97 32 109 97 116 97 116 97 32 50 13 } = hakuna matata 2
+{ 104 97 107 117 110 97 32 109 97 116 97 116 97 32 51 13 } = hakuna matata 3

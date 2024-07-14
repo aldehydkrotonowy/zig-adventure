@@ -1,5 +1,19 @@
-.vscode
-*.o
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
 
-zig-cache
-zig-out
+
+### zig ###
+# Zig programming language
+*.o
+.zig-cache
+zig-cache/
+zig-out/
+build/
+build-*/
+docgen_tmp/
+

@@ -14,6 +14,18 @@ pub fn main() !void {
     try stdout.print("Run `zig build test` to run the tests.\n", .{});
 
     try bw.flush(); // don't forget to flush!
+    // ==============================================================================================
+    // open curreent directory and list content
+    // this is version for zig 12.0
+    const cwd = try std.fs.cwd().openDir(".", .{ .iterate = true });
+
+    // and zig 11? version is like this
+    // const cwd = try std.fs.cwd().openIterableDir(".", .{});
+    var iterator = cwd.iterate();
+    while (try iterator.next()) |path| {
+        try stdout.print("{s}\n", .{path.name});
+    }
+    // ==============================================================================================
 }
 
 test "simple test" {
