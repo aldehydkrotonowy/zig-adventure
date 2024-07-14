@@ -11,6 +11,12 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
+    const dir = try std.fs.cwd().openDir(".", .{ .iterate = true });
+    var iterator = dir.iterate();
+    while (try iterator.next()) |path| {
+        try stdout.print("{s}\n", .{path.name});
+    }
+
     const fileName = "hakuna.txt";
     const file = try std.fs.cwd().openFile(fileName, .{ .mode = .read_only });
     // var buf_reader = std.io.bufferedReader(file.reader()); //this must be var
