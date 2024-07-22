@@ -57,6 +57,20 @@ pub fn main() !void {
         helper.printSlice("tag: ", chunk.tag);
         helper.printSlice("data: ", chunk.data);
         helper.printSlice("derivedFrom: ", chunk.derivedFrom);
+
+        switch (state) {
+            .Device => {},
+            .Cpu => {},
+            .Peripherals => {},
+            .Peripheral => {},
+            .AddressBlock => {},
+            .Interrupt => {},
+            .Registers => {},
+            .Register => {},
+            .Fields => {},
+            .Field => {},
+            .Finished => {},
+        }
     }
 
     // try std.io.getStdOut().writer().print("\n==================\n", .{});

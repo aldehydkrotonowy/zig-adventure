@@ -7,3 +7,9 @@
 [submodule "zig-language"]
 	path = zig-language
 	url = https://github.com/ziglang/zig.git
+[submodule "justinbalexander-svd2zig"]
+	path = justinbalexander-svd2zig
+	url = git@github.com:justinbalexander/svd2zig.git
+[submodule "lynaghk-svd2zig"]
+	path = lynaghk-svd2zig
+	url = git@github.com:lynaghk/svd2zig.git
