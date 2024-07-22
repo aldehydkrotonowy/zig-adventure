@@ -1,6 +1,64 @@
 const std = @import("std");
 const helper = @import("helper.zig");
 
+const XMLParseError = error{invalidXML};
+
+const Device = struct {
+    name: std.ArrayList(u8),
+    version: std.ArrayList(u8),
+    description: std.ArrayList(u8),
+    cpu: Cpu,
+    /// Bus Interface Properties
+    /// Smallest addressable unit in bits
+    address_unit_bits: ?u32,
+    /// the maximum data bit width accessible within a single transfer
+    max_bit_width: ?u32,
+    /// Start register default properties
+    reg_default_size: ?u32,
+    reg_default_reset_value: ?u32,
+    reg_default_reset_mask: ?u32,
+    peripherals: Peripherals,
+    interrupts: Interrupts,
+
+    const Self = @This();
+    pub fn init(allocator: std.mem.Allocator) !Self {
+        const name = std.ArrayList(u8).init(allocator);
+        return Self{ .name = name };
+    }
+};
+
+const Cpu = struct {
+    name: std.ArrayList(u8),
+    revision: std.ArrayList(u8),
+    endian: std.ArrayList(u8),
+    mpu_present: ?bool,
+    fpu_present: ?bool,
+    nvic_prio_bits: ?u32,
+    vendor_systick_config: ?bool,
+
+    const Self = @This();
+    pub fn init(allocator: std.mem.Allocator) !Self {
+        const name = std.ArrayList(u8).init(allocator);
+        return Self{ .name = name };
+    }
+};
+
+const Peripherals = std.ArrayList(Peripheral);
+const Peripheral = struct {
+    name: std.ArrayList(u8),
+    const Self = @This();
+    pub fn init(allocator: std.mem.Allocator) !Self {
+        const name = std.ArrayList(u8).init(allocator);
+
+        return Self{
+            .name = name,
+        };
+    }
+};
+
+const Interrupts = std.AutoHashMap(u32, Interrupt);
+const Interrupt = struct {};
+
 const SvdParseState = enum {
     Device,
     Cpu,
@@ -21,8 +79,7 @@ const XmlLine = struct {
     derivedFrom: ?[]const u8,
 };
 
-pub fn main() !void {
-    const stdout = std.io.getStdOut().writer();
+pub fn main() XMLParseError!void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
         const deinit_status = gpa.deinit();
@@ -40,7 +97,7 @@ pub fn main() !void {
 
     const fileName = "test.xml";
     const state = SvdParseState.Device;
-    _ = state;
+    const device = try Device.init(allocator);
 
     const xmlFile = try std.fs.cwd().openFile(fileName, .{ .mode = .read_only });
     defer xmlFile.close();
@@ -53,14 +110,88 @@ pub fn main() !void {
             break;
         }
         const chunk = parseXmlLine(line) orelse continue;
-        try stdout.print("\n chunk ======================================\n", .{});
-        helper.printSlice("tag: ", chunk.tag);
-        helper.printSlice("data: ", chunk.data);
-        helper.printSlice("derivedFrom: ", chunk.derivedFrom);
+        // try stdout.print("\n chunk ======================================\n", .{});
+        // helper.printSlice("tag: ", chunk.tag);
+        // helper.printSlice("data: ", chunk.data);
+        // helper.printSlice("derivedFrom: ", chunk.derivedFrom);
 
         switch (state) {
-            .Device => {},
-            .Cpu => {},
+            .Device => {
+                if (std.ascii.eqlIgnoreCase(chunk.tag, "/device")) {
+                    state = .Finished;
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "name")) {
+                    if (chunk.data) |data| {
+                        try device.name.insertSlice(0, data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "version")) {
+                    if (chunk.data) |data| {
+                        try device.version.insertSlice(0, data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "description")) {
+                    if (chunk.data) |data| {
+                        try device.description.insertSlice(0, data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "cpu")) {
+                    const cpu = try Cpu.init(allocator);
+                    device.cpu = cpu;
+                    state = .Cpu;
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "addressUnitBits")) {
+                    if (chunk.data) |data| {
+                        device.address_unit_bits = std.fmt.parseInt(u32, data, 10);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "width")) {
+                    if (chunk.data) |data| {
+                        device.max_bit_width = std.fmt.parseInt(u32, data, 10);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "size")) {
+                    if (chunk.data) |data| {
+                        device.reg_default_size = std.fmt.parseInt(u32, data, 10);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "resetValue")) {
+                    if (chunk.data) |data| {
+                        device.reg_default_reset_value = std.fmt.parseInt(u32, data, 10);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "resetMask")) {
+                    if (chunk.data) |data| {
+                        device.reg_default_reset_mask = std.fmt.parseInt(u32, data, 10);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "peripherals")) {
+                    state = .Peripherals;
+                }
+            },
+            .Cpu => {
+                if (std.ascii.eqlIgnoreCase(chunk.tag, "/cpu")) {
+                    state = .Device;
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "name")) {
+                    if (chunk.data) |data| {
+                        try device.cpu.?.name.insertSlice(0, data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "revision")) {
+                    if (chunk.data) |data| {
+                        try device.cpu.?.revision.insertSlice(0, data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "endian")) {
+                    if (chunk.data) |data| {
+                        try device.cpu.?.endian.insertSlice(0, data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "mpuPresent")) {
+                    if (chunk.data) |data| {
+                        device.cpu.?.mpu_present = helper.textToBool(data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "fpuPresent")) {
+                    if (chunk.data) |data| {
+                        device.cpu.?.fpu_present = helper.textToBool(data);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "nvicPrioBits")) {
+                    if (chunk.data) |data| {
+                        device.cpu.?.nvic_prio_bits = std.fmt.parseInt(u32, data, 10);
+                    }
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "vendorSystickConfig")) {
+                    if (chunk.data) |data| {
+                        device.cpu.?.vendor_systick_config = helper.textToBool(data);
+                    }
+                }
+            },
             .Peripherals => {},
             .Peripheral => {},
             .AddressBlock => {},
@@ -73,7 +204,11 @@ pub fn main() !void {
         }
     }
 
-    // try std.io.getStdOut().writer().print("\n==================\n", .{});
+    if (state == .Finished) {
+        try std.io.getStdOut().writer().print("{}\n", .{device});
+    } else {
+        return XMLParseError.invalidXML;
+    }
 }
 
 fn parseXmlLine(line: []const u8) ?XmlLine {
@@ -89,10 +224,10 @@ fn parseXmlLine(line: []const u8) ?XmlLine {
 
     if (necked_xml_line.next()) |tag_with_maby_props| {
         if (std.mem.containsAtLeast(u8, tag_with_maby_props, 1, "=\"")) {
-            var tag_and_prop_it = std.mem.tokenizeAny(u8, tag_with_maby_props, " =\"");
-            const just_tag = tag_and_prop_it.next().?;
-            _ = tag_and_prop_it.next(); //omit derivedFrom prop;
-            const derivedFrom_value = tag_and_prop_it.next().?;
+            var tag_and_prop_iter = std.mem.tokenizeAny(u8, tag_with_maby_props, " =\"");
+            const just_tag = tag_and_prop_iter.next().?;
+            _ = tag_and_prop_iter.next(); //omit derivedFrom prop;
+            const derivedFrom_value = tag_and_prop_iter.next().?;
             chunk.tag = just_tag;
             chunk.derivedFrom = derivedFrom_value;
         } else {
