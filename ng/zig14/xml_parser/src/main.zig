@@ -46,12 +46,25 @@ const Cpu = struct {
 const Peripherals = std.ArrayList(Peripheral);
 const Peripheral = struct {
     name: std.ArrayList(u8),
+    group_name: std.ArrayList(u8),
+    description: std.ArrayList(u8),
+    base_address: ?u32,
+    // address_block: ?AddressBlock,
+    // registers: Registers,
     const Self = @This();
     pub fn init(allocator: std.mem.Allocator) !Self {
         const name = std.ArrayList(u8).init(allocator);
+        errdefer name.deinit();
+        const group_name = std.ArrayList(u8).init(allocator);
+        errdefer group_name.deinit();
+        const description = std.ArrayList(u8).init(allocator);
+        errdefer description.deinit();
 
         return Self{
             .name = name,
+            .group_name = group_name,
+            .description = description,
+            .base_address = null,
         };
     }
 };
@@ -192,8 +205,29 @@ pub fn main() XMLParseError!void {
                     }
                 }
             },
-            .Peripherals => {},
-            .Peripheral => {},
+            .Peripherals => {
+                if (std.ascii.eqlIgnoreCase(chunk.tab, "/peripherals")) {
+                    state = .Device;
+                } else if (std.ascii.eqlIgnoreCase(chunk.tag, "peripheral")) {
+                    const peripheral = try Peripheral.init(allocator);
+                    try device.peripherals.append(peripheral);
+                    state = .Peripheral;
+                    if (chunk.derivedFrom) |derivedFrom| {
+                        for (device.peripherals.items) |currentPeripheral| {
+                            if (std.mem.eql(u8, currentPeripheral, derivedFrom)) {
+                                try device.peripherals.append(try currentPeripheral.copy(allocator));
+                                break;
+                            }
+                        }
+                    }
+                }
+            },
+            .Peripheral => {
+                if (std.ascii.eqlIgnoreCase(chunk.tag, "/peripheral")) {
+                    // state = .Peripherals;
+                    state = .Finished;
+                }
+            },
             .AddressBlock => {},
             .Interrupt => {},
             .Registers => {},
